@@ -1,4 +1,7 @@
-const app = require('express')();
+const express = require('express');
+const cors = require('cors');
+const mysql = require('mysql');
+const app = express();
 const server = require('http').createServer(app);
 const io = require('socket.io')(server, {
     cors:{
@@ -6,6 +9,38 @@ const io = require('socket.io')(server, {
     }
 });
 
+const con = mysql.createConnection({
+    host:'localhost',
+    user: 'root',
+    password: '1234',
+    database: 'Wazura'
+});
+
+con.connect(function(err) {
+    if (err) throw err;
+    console.log('database connected')
+})
+
+
+app.use(express.urlencoded({extended:true}));
+app.use(express.json());
+
+app.use(cors());
+
+app.post('/api/login', (req, res) => {
+    console.log(req.body);
+    con.query(`SELECT id, password FROM keeper_info WHERE id = ${req.body.id} AND password = ${req.body.password}`, function(err, result, field) {
+        if(err) throw err;
+        if(result.length === 0){
+            res.send('fail')
+        } else{
+            res.send('success')
+        }
+    })
+})
+
+
+// socket
 const customerNamespace = io.of("/customer");
 const keeperNamespace = io.of("/keeper");
 
